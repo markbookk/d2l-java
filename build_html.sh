@@ -46,7 +46,7 @@ function eval {
     aws s3 cp "$output_dir/$1" "s3://d2l-java-notebook/daily-backup/$date/$output_dir/$1"
 }
 
-for f in **/*.ipynb
+for f in chapter_recurrent-neural-networks/*.ipynb
 do
   eval "$f"
 done
