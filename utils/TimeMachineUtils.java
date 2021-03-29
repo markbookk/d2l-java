@@ -242,19 +242,18 @@ public class RNNModelScratch {
     public int vocabSize;
     public int numHiddens;
     public NDList params;
-    public Functions.TriFunction<Integer, Integer, Device, NDList> initState;
+    public BiFunction<Integer, Integer, NDList> initState;
     public Functions.TriFunction<NDArray, NDList, NDList, Pair> forwardFn;
 
     public RNNModelScratch(
             int vocabSize,
             int numHiddens,
-            Device device,
-            Functions.TriFunction<Integer, Integer, Device, NDList> getParams,
-            Functions.TriFunction<Integer, Integer, Device, NDList> initRNNState,
+            BiFunction<Integer, Integer, NDList> getParams,
+            BiFunction<Integer, Integer, NDList> initRNNState,
             Functions.TriFunction<NDArray, NDList, NDList, Pair> forwardFn) {
         this.vocabSize = vocabSize;
         this.numHiddens = numHiddens;
-        this.params = getParams.apply(vocabSize, numHiddens, device);
+        this.params = getParams.apply(vocabSize, numHiddens);
         this.initState = initRNNState;
         this.forwardFn = forwardFn;
     }
@@ -264,8 +263,8 @@ public class RNNModelScratch {
         return this.forwardFn.apply(X, state, this.params);
     }
 
-    public NDList beginState(int batchSize, Device device) {
-        return this.initState.apply(batchSize, this.numHiddens, device);
+    public NDList beginState(int batchSize) {
+        return this.initState.apply(batchSize, this.numHiddens);
     }
 }
 
@@ -387,7 +386,7 @@ public class TimeMachine {
 
         if (net instanceof RNNModelScratch) {
             RNNModelScratch castedNet = (RNNModelScratch) net;
-            NDList state = castedNet.beginState(1, device);
+            NDList state = castedNet.beginState(1);
 
             for (char c : prefix.substring(1).toCharArray()) { // Warm-up period
                 state = (NDList) castedNet.forward(getInput.apply(), state).getValue();
@@ -539,7 +538,7 @@ public class TimeMachine {
                     if (net instanceof RNNModelScratch) {
                         state =
                                 ((RNNModelScratch) net)
-                                        .beginState((int) X.getShape().getShape()[0], device);
+                                        .beginState((int) X.getShape().getShape()[0]);
                     }
                 } else {
                     for (NDArray s : state) {
